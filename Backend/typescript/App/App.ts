@@ -1,6 +1,7 @@
 import express, { Express } from "express";
-
 import cors from "cors";
+import TodoRouter from "../Routers/TodoRouter";
+import appConfig from "../../config.json"
 
 export default class App {
   private app: Express = express();
@@ -16,8 +17,14 @@ export default class App {
     this.app.use(cors());
   }
 
-  public loadRoutes() {}
+  public async loadRoutes() {
+    const imported = await import(`../Services/${appConfig.service}.js`)
+    const ServiceClass = imported.default;
+    this.app.use("/todo", new TodoRouter(new ServiceClass).router)
+  }
   public startApp() {
-    this.app.listen(this.port, ()=> console.log(`Server started on port ${this.port}...`))
+    this.app.listen(this.port, () =>
+      console.log(`Server started on port ${this.port}...`)
+    );
   }
 }
