@@ -1,4 +1,35 @@
 {
-    "port":7000,
-    "service": "TodoMySqlService"
+    "port": 7000,
+    "service":"TodoMongoDBService",
+    "services": [
+        {
+            "name": "TodoMySql",
+            "serviceClass": "TodoMySqlService",
+            "connectionParameters": {
+                "host": "localhost",
+                "user": "root",
+                "password": "12345678",
+                "database": "todoschema",
+                "pool": 10,
+                "namedPlaceholders": true
+            }
+        },
+        {
+            "name": "TodoMongoDB",
+            "serviceClass": "TodoMongoDBService",
+            "connectionParameters": {
+                "url":"mongodb://localhost:27017/TodoDatabase"
+            }
+        }
+    ],
+    "routers":[
+        {
+            "name":"TodoRouter",
+            "routerClass":"TodoRouter"
+        }
+    ],
+    "infoOn": false,
+    "warnOn": false,
+    "errorOn": false,
+    "traceOn": true
 }

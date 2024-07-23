@@ -1,0 +1,30 @@
+{
+    "view":"TodoView",
+    "services": [
+        {
+            "name": "remote",
+            "class": "TodoRemoteStorageService",
+            "arguments": {
+                "storageName": "Remote Storage"
+            }
+        },
+        {
+            "name": "local",
+            "class": "TodoLocalStorageService",
+            "arguments": {
+                "storageName":"Local Storage"
+            }
+        },
+        {
+            "name": "session",
+            "class": "TodoSessionStorageService",
+            "arguments": {
+                "storageName":"Session Storage"
+            }
+        }
+    ],
+    "infoOn": false,
+    "warnOn": false,
+    "errorOn": false,
+    "traceOn": true
+}

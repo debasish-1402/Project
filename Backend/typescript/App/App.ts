@@ -2,6 +2,7 @@ import express, { Express } from "express";
 import cors from "cors";
 import TodoRouter from "../Routers/TodoRouter";
 import appConfig from "../../config.json"
+import WinstonLogger from "../Utilities/WinstonLogger";
 
 export default class App {
   private app: Express = express();
@@ -23,8 +24,10 @@ export default class App {
     this.app.use("/todo", new TodoRouter(new ServiceClass).router)
   }
   public startApp() {
-    this.app.listen(this.port, () =>
-      console.log(`Server started on port ${this.port}...`)
+    this.app.listen(this.port, () =>{
+      // console.log(`Server started on port ${this.port}...`)
+      WinstonLogger.logger.info(`Server started on port ${this.port}...`)
+    }
     );
   }
 }

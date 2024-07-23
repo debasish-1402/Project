@@ -1,12 +1,12 @@
-import Todo from "../Models/Todo";
-import ITodoService from "./ITodoService";
 import MySql, {
   ConnectionOptions,
   FieldPacket,
   Pool,
-  ResultSetHeader,
-  RowDataPacket,
+  ResultSetHeader
 } from "mysql2/promise";
+import Todo from "../Models/Todo";
+import ITodoService from "./ITodoService";
+import { trace } from "../Utilities/Logger";
 
 export default class TodoMySqlService implements ITodoService {
   private connectionSettings: ConnectionOptions = {
@@ -23,23 +23,32 @@ export default class TodoMySqlService implements ITodoService {
   constructor() {
     this.connectionPool = MySql.createPool(this.connectionSettings);
   }
-  async addTodo(text: string, completed: boolean): Promise<Todo | undefined> {
-    let connection = await this.connectionPool.getConnection();
+
+  @trace
+  async addTodo(text: string, completed: boolean): Promise<Todo> {
+
+    let connection;
     try {
+
+      connection = await this.connectionPool.getConnection();
       const [result] = await connection.query(
         "INSERT INTO todo(text, completed) VALUES(:text,:completed)",
         { text: text, completed: completed == true ? 1 : 0 }
       );
       return new Todo((result as ResultSetHeader).insertId, text, completed);
-    } catch (error) {
-      return undefined;
+
     } finally {
-      connection.release();
+      connection?.release();
     }
   }
-  async getTodo(id: number): Promise<Todo | undefined> {
-    let connection = await this.connectionPool.getConnection();
+
+  @trace
+  async getTodo(id: number): Promise<Todo> {
+    
+    let connection;
     try {
+
+      connection = await this.connectionPool.getConnection();
       const result = await connection.query(
         "SELECT * FROM todo WHERE id=:todoId",
         {
@@ -47,31 +56,40 @@ export default class TodoMySqlService implements ITodoService {
         }
       );
       const rows = result[0] as unknown as FieldPacket[];
-      if (rows.length != 0) {
-        return rows[0] as unknown as Todo;
-      } else {
-        return undefined;
+
+      if (rows.length == 0) {
+        throw new Error(`Todo not found with id = ${id}.`);
       }
-    } catch (error) {
-      return undefined;
+
+      return rows[0] as unknown as Todo;
+
     } finally {
-      connection.release();
+      connection?.release();
     }
   }
-  async getAllTodo(): Promise<Todo[] | undefined> {
-    let connection = await this.connectionPool.getConnection();
+
+  @trace
+  async getAllTodo(): Promise<Todo[]> {
+
+    let connection;
     try {
+
+      connection = await this.connectionPool.getConnection();
       const [result] = await connection.query("SELECT * FROM todo");
       return result as Todo[];
-    } catch (error) {
-      return undefined;
+
     } finally {
-      connection.release();
+      connection?.release();
     }
   }
-  async updateTodo(todo: Todo): Promise<Todo | undefined> {
-    let connection = await this.connectionPool.getConnection();
+
+  @trace
+  async updateTodo(todo: Todo): Promise<Todo> {
+
+    let connection;
     try {
+
+      connection = await this.connectionPool.getConnection();
       const found = await connection.query(
         "SELECT * FROM todo WHERE id=:todoId",
         {
@@ -79,29 +97,33 @@ export default class TodoMySqlService implements ITodoService {
         }
       );
       const rows = found[0] as unknown as FieldPacket[];
-      if (rows.length != 0) {
-        const [result] = await connection.query(
-          "UPDATE todo SET text=:text, completed=:completed WHERE id=:id",
-          {
-            id: +todo.id,
-            text: todo.text,
-            completed: todo.completed == true ? 1 : 0,
-          }
-        );
-        if ((result as ResultSetHeader).affectedRows != 0) {
-          return new Todo(+todo.id, todo.text, todo.completed);
-        }
+
+      if (rows.length == 0) {
+        throw new Error(`Todo not found.`);
       }
-    } catch (error) {
-      console.log(error);
-      return undefined;
+
+      const [result] = await connection.query(
+        "UPDATE todo SET text=:text, completed=:completed WHERE id=:id",
+        {
+          id: +todo.id,
+          text: todo.text,
+          completed: todo.completed == true ? 1 : 0,
+        }
+      );
+      return new Todo(+todo.id, todo.text, todo.completed);
+
     } finally {
-      connection.release();
+      connection?.release();
     }
   }
-  async deleteTodo(id: number): Promise<Todo | undefined> {
-    let connection = await this.connectionPool.getConnection();
+
+  @trace
+  async deleteTodo(id: number): Promise<Todo> {
+    
+    let connection;
     try {
+
+      connection = await this.connectionPool.getConnection();
       const found = await connection.query(
         "SELECT * FROM todo WHERE id=:todoId",
         {
@@ -109,19 +131,18 @@ export default class TodoMySqlService implements ITodoService {
         }
       );
       const rows = found[0] as unknown as FieldPacket[];
-      if (rows.length != 0) {
-        const [result] = await connection.query(
-          "DELETE FROM todo WHERE id=:id",
-          { id: id }
-        );
-        if ((result as ResultSetHeader).affectedRows != 0) {
-          return rows[0] as unknown as Todo;
-        } else return undefined;
-      } else return undefined;
-    } catch (error) {
-      return undefined;
+
+      if (rows.length == 0) {
+        throw new Error(`Todo not found with id = ${id}.`);
+      }
+
+      const [result] = await connection.query("DELETE FROM todo WHERE id=:id", {
+        id: id,
+      });
+      return rows[0] as unknown as Todo;
+
     } finally {
-      connection.release();
+      connection?.release();
     }
   }
 }
